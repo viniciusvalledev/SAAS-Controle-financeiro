@@ -11,7 +11,6 @@
     <canvas id="particles"></canvas>
 
     <div class="container">
-      <!-- LOGIN -->
       <div id="auth-container" class="auth-box">
         <h2>Login</h2>
         <input type="email" id="login-email" placeholder="Email" />
@@ -23,7 +22,6 @@
         </p>
       </div>
 
-      <!-- CADASTRO -->
       <div id="signup-container" class="auth-box hidden">
         <h2>Cadastro</h2>
         <input type="text" id="signup-username" placeholder="Nome de usuário" />
@@ -36,7 +34,6 @@
         </p>
       </div>
 
-      <!-- BOAS-VINDAS -->
       <div id="welcome-container" class="hidden">
         <h2>Bem-vindo, <span id="welcome-username"></span>!</h2>
         <button class="btn" onclick="goToDashboard()">
@@ -45,7 +42,6 @@
         <button class="btn-outline" onclick="logout()">Sair</button>
       </div>
 
-      <!-- DASHBOARD -->
       <div id="dashboard-container" class="hidden">
         <div class="header">
           <h2>Painel Financeiro</h2>
@@ -58,14 +54,10 @@
           <input type="number" id="amount" placeholder="Valor" />
           <input type="text" id="description" placeholder="Descrição" />
           <select id="type">
-            <option value="income">Receita</option>
-            <option value="expense">Despesa</option>
+            <option value="expense">Despesa</option> <option value="income">Receita</option>
           </select>
           <select id="category">
-            <option value="comida">Comida</option>
-            <option value="entretenimento">Entretenimento</option>
-            <option value="namorada">Namorada</option>
-          </select>
+            </select>
           <button class="btn" id="addBtn">Adicionar</button>
         </div>
 

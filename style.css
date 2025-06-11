@@ -3,7 +3,7 @@
 body {
   margin: 0;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: #0e0e0e;
+  background: #0E0D0D;
   color: white;
   overflow-x: hidden;
   min-height: 100vh;
@@ -48,10 +48,10 @@ body::before {
 /* Caixas de login, cadastro, boas-vindas */
 .auth-box,
 #welcome-container {
-  background: #1a1a1a;
+  background: #0e0d0d;
   padding: 2rem;
   border-radius: 20px;
-  box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.217);
   max-width: 400px;
   width: 100%;
   margin: auto;
@@ -64,7 +64,7 @@ body::before {
 /* Dashboard maior mas ainda centralizado */
 #dashboard-container {
   width: 100%;
-  max-width: 900px;
+  max-width: 800px;
   background: #1a1a1a;
   padding: 2rem;
   border-radius: 20px;
@@ -197,4 +197,30 @@ canvas {
   input, select, button {
     font-size: 1rem;
   }
+}
+/* ADICIONADO: Estilo para o novo botão de remover */
+.btn-remove {
+  background: transparent;
+  border: 1px solid #ff4f4f;
+  color: #ff4f4f;
+  padding: 4px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-left: 15px; /* Adiciona um espaço do texto */
+  font-size: 0.8rem;
+  transition: all 0.2s ease;
+  float: right; /* Alinha o botão à direita */
+}
+
+.btn-remove:hover {
+  background: #ff4f4f;
+  color: white;
+}
+
+/* ADICIONADO: Ajuste no item da lista para acomodar o botão flutuante */
+#history-list li {
+  padding: 10px; /* Aumenta o padding para melhor visual */
+  padding-right: 90px; /* Dá espaço para o botão não sobrepor o texto */
+  position: relative;
+  overflow: hidden; /* Garante que a linha se comporte bem com o float */
 }

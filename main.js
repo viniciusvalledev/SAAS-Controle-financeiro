@@ -1,4 +1,4 @@
-// main.js
+// main.js - VERSÃO CORRIGIDA
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
 import {
   getAuth,
@@ -16,16 +16,18 @@ import {
   doc,
   query,
   where,
-  onSnapshot
+  onSnapshot,
+  orderBy
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBmSay4GcodjXJaTlrmGB4fqEPLA5b2V9o",
-  authDomain: "granafacil-58053.firebaseapp.com",
-  projectId: "granafacil-58053",
-  storageBucket: "granafacil-58053.appspot.com",
-  messagingSenderId: "162272759269",
-  appId: "1:162272759269:web:e023deddb8bbde6fec730c",
+    // Sua firebaseConfig permanece a mesma
+    apiKey: "AIzaSyBmSay4GcodjXJaTlrmGB4fqEPLA5b2V9o",
+    authDomain: "granafacil-58053.firebaseapp.com",
+    projectId: "granafacil-58053",
+    storageBucket: "granafacil-58053.appspot.com",
+    messagingSenderId: "162272759269",
+    appId: "1:162272759269:web:e023deddb8bbde6fec730c",
 };
 
 const app = initializeApp(firebaseConfig);
@@ -35,13 +37,22 @@ const db = getFirestore(app);
 let currentUser = null;
 let incomeChart, expenseChart;
 
+const categories = {
+  expense: [
+    'Comida', 'Transporte', 'Moradia', 'Contas', 'Lazer', 
+    'Saúde', 'Compras', 'Educação', 'Investimentos', 'Impostos', 'Outros'
+  ],
+  income: [
+    'Salário', 'Freelance', 'Vendas', 'Investimentos', 'Presente', 'Outros'
+  ]
+};
+
 onAuthStateChanged(auth, (user) => {
   if (user) {
     currentUser = user;
-    document.getElementById("welcome-username").textContent = user.displayName;
-    show("welcome-container");
-    setTimeout(loadTransactions, 300);
+    // O direcionamento agora é feito principalmente no login/signup/logout
   } else {
+    currentUser = null;
     show("auth-container");
   }
 });
@@ -51,17 +62,41 @@ window.signup = async () => {
   const password = document.getElementById("signup-password").value;
   const username = document.getElementById("signup-username").value;
 
-  const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-  await updateProfile(userCredential.user, { displayName: username });
-  location.reload();
+  try {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    await updateProfile(userCredential.user, { displayName: username });
+    
+    // Leva direto para o painel após o cadastro
+    document.getElementById("welcome-username").textContent = username;
+    show("welcome-container");
+
+  } catch (error) {
+    alert("Erro ao criar conta: " + error.message);
+  }
 };
 
+// ===================================================================
+// AQUI ESTÁ A FUNÇÃO CORRIGIDA
+// ===================================================================
 window.login = async () => {
   const email = document.getElementById("login-email").value;
   const password = document.getElementById("login-password").value;
 
-  await signInWithEmailAndPassword(auth, email, password);
+  try {
+    // 1. Faz o login do usuário
+    await signInWithEmailAndPassword(auth, email, password);
+    
+    // 2. ATUALIZADO: Vai direto para o painel
+    show('dashboard-container'); 
+    
+    // 3. ATUALIZADO: Inicia o painel e força o carregamento das transações
+    setupDashboard();
+
+  } catch(error) {
+    alert("Erro ao fazer login: " + error.message);
+  }
 };
+// ===================================================================
 
 window.logout = async () => {
   await signOut(auth);
@@ -70,17 +105,35 @@ window.logout = async () => {
 
 window.goToDashboard = () => {
   show("dashboard-container");
-  setupAddButton();
-  loadTransactions();
+  setupDashboard();
 };
 
-function setupAddButton() {
+function updateCategoryOptions() {
+  const type = document.getElementById("type").value;
+  const categorySelect = document.getElementById("category");
+  categorySelect.innerHTML = ''; // Limpa as opções atuais
+
+  const currentCategories = categories[type];
+  currentCategories.forEach(cat => {
+    const option = document.createElement('option');
+    option.value = cat.toLowerCase();
+    option.textContent = cat;
+    categorySelect.appendChild(option);
+  });
+}
+
+function setupDashboard() {
   const addBtn = document.getElementById("addBtn");
+  const typeSelect = document.getElementById("type");
+  
+  typeSelect.onchange = updateCategoryOptions;
+  updateCategoryOptions();
+  
   if (!addBtn) return;
 
   addBtn.onclick = async () => {
     const amount = parseFloat(document.getElementById("amount").value);
-    const description = document.getElementById("description").value;
+    const description = document.getElementById("description").value.trim();
     const type = document.getElementById("type").value;
     const category = document.getElementById("category").value;
 
@@ -100,13 +153,15 @@ function setupAddButton() {
 
     document.getElementById("amount").value = "";
     document.getElementById("description").value = "";
-    document.getElementById("type").value = "income";
-    document.getElementById("category").value = "comida";
   };
+
+  loadTransactions();
 }
 
 function loadTransactions() {
-  const q = query(collection(db, "transactions"), where("uid", "==", currentUser.uid));
+  if (!currentUser) return;
+  const q = query(collection(db, "transactions"), where("uid", "==", currentUser.uid), orderBy("createdAt", "desc"));
+  
   onSnapshot(q, (snapshot) => {
     const transactions = [];
     snapshot.forEach((doc) => transactions.push({ id: doc.id, ...doc.data() }));
@@ -117,6 +172,7 @@ function loadTransactions() {
 function renderData(transactions) {
   const historyList = document.getElementById("history-list");
   const balanceSpan = document.getElementById("balance");
+  if (!historyList || !balanceSpan) return;
 
   historyList.innerHTML = "";
 
@@ -129,7 +185,7 @@ function renderData(transactions) {
     li.className = t.type;
     li.innerHTML = `
       ${t.type === "income" ? "+" : "-"} R$ ${t.amount.toFixed(2)} | ${t.description} | ${t.category}
-      <button onclick="removeTransaction('${t.id}')">Remover</button>
+      <button class="btn-remove" onclick="removeTransaction('${t.id}')">Remover</button>
     `;
     historyList.appendChild(li);
 
@@ -147,39 +203,43 @@ function renderData(transactions) {
 }
 
 window.removeTransaction = async (id) => {
-  await deleteDoc(doc(db, "transactions", id));
+  if (confirm("Tem certeza que deseja remover esta transação?")) {
+      await deleteDoc(doc(db, "transactions", id));
+  }
 };
 
 function updateCharts(incomeData, expenseData) {
   if (incomeChart) incomeChart.destroy();
   if (expenseChart) expenseChart.destroy();
+  
+  const incomeCanvas = document.getElementById("incomeChart");
+  const expenseCanvas = document.getElementById("expenseChart");
+  if (!incomeCanvas || !expenseCanvas) return;
 
-  incomeChart = new Chart(document.getElementById("incomeChart"), {
+  incomeChart = new Chart(incomeCanvas, {
     type: "pie",
     data: {
       labels: Object.keys(incomeData),
       datasets: [{
         data: Object.values(incomeData),
-        backgroundColor: ["lime", "lightgreen", "green"]
       }]
     }
   });
 
-  expenseChart = new Chart(document.getElementById("expenseChart"), {
+  expenseChart = new Chart(expenseCanvas, {
     type: "pie",
     data: {
       labels: Object.keys(expenseData),
       datasets: [{
         data: Object.values(expenseData),
-        backgroundColor: ["red", "tomato", "darkred"]
       }]
     }
   });
 }
 
 function show(id) {
-  ["auth-container", "signup-container", "welcome-container", "dashboard-container"].forEach((el) => {
-    const element = document.getElementById(el);
+  ["auth-container", "signup-container", "welcome-container", "dashboard-container"].forEach((elId) => {
+    const element = document.getElementById(elId);
     if (element) element.classList.add("hidden");
   });
 
